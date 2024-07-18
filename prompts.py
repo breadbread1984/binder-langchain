@@ -1191,11 +1191,13 @@ NeuralSQL: SELECT `males` + `females` FROM w WHERE `language` = 'german'"""
     raise NotImplementedError
   return examples
 
-def get_binder_template(tokenizer,
+def get_binder_template(dataset,
+                        tokenizer,
                         prompt_style = 'create_table_select_3_full_table',
                         generate_type = 'answer',
-                        title: str,
-                        table: pd.DataFrame):
+                        title: str = None,
+                        table: pd.DataFrame = None,):
+  assert dataset in {'mmqa', 'tab_fact', 'wikiq'}
   assert prompt_style in {'create_table_select_3_full_table',
                           'create_table_select_full_table',
                           'create_table_select_3',
@@ -1205,7 +1207,7 @@ def get_binder_template(tokenizer,
                           'no_table'}
   assert generate_type in {'answer', 'nsql', 'sql', 'npython', 'python'}
   system_message = "I will give you some x-y examples followed by a x, you need to give me the y, and no other content."
-  user_message = ""
+  user_message = few_shot_case(dataset) + "\n\n"
   if generate_type == 'answer':
     user_message += """\n-- Answer the question based on the given table below.\n\n"""
   elif generate_type == 'nsql':
