@@ -1278,30 +1278,52 @@ def get_binder_template(dataset,
     user_message += sql_example(df = table, num_rows = 3, few_shot_demonstration = False)
   elif prompt_style in ['no_select', 'no_table']:
     pass
-  elif prompt_style in ['select_3_full_table_w_all_passage_image']:
+  elif prompt_style in ['select_3_full_table_w_all_passage_image','select_3_full_table_w_gold_passage_image']:
     assert dataset == 'mmqa'
     assert passages is not None and images is not None
+    if prompt_style == 'select_3_full_table_w_gold_passage_image': assert supporting_context is not None
     user_message += sql_example(df = table, num_rows = table.shape[0], few_shot_deomonstration = False)
     all_passages, all_images = list(), list()
     with open(join('datasets','mmqa_captions.json'),'r') as f:
       caption_map = json.load(f)
-    for passage_idx in range(len(passages['id'])):
-      all_passages.append({
-        'id': passages['id'][passage_idx],
-        'title': passages['title'][passage_idx],
-        'url': passages['url'][passage_idx],
-        'text': passages['text'][passage_idx]
-      })
+    if prompt_style == 'select_3_full_table_w_all_passage_image':
+      for passage_idx in range(len(passages['id'])):
+        all_passages.append({
+          'id': passages['id'][passage_idx],
+          'title': passages['title'][passage_idx],
+          'url': passages['url'][passage_idx],
+          'text': passages['text'][passage_idx]
+        })
 
-    for image_idx in range(len(images['id'])):
-      all_images.append({
-        "id": images['id'][image_idx],
-        "title": images['title'][image_idx],
-        "url": images['url'][image_idx],
-        "path": images['path'][image_idx],
-        "pic": images['pic'][image_idx],
-        "caption": caption_map[images['id'][image_idx]]
-      })
+      for image_idx in range(len(images['id'])):
+        all_images.append({
+          "id": images['id'][image_idx],
+          "title": images['title'][image_idx],
+          "url": images['url'][image_idx],
+          "path": images['path'][image_idx],
+          "pic": images['pic'][image_idx],
+          "caption": caption_map[images['id'][image_idx]]
+        })
+    else:
+      for doc_id, doc_part in zip(supporting_context['doc_id'], supporting_context['doc_part']):
+        if doc_part == 'text':
+          passage_idx = passages['id'].index(doc_id)
+          passages.append({
+            'id': passages['id'][passage_idx],
+            'title': passages['title'][passage_idx],
+            'url': passages['url'][passage_idx],
+            'text': passages['text'][passage_idx]
+          })
+        elif doc_part == 'image':
+          image_idx = images['id'].index(doc_id)
+          images.append({
+            "id": images['id'][image_idx],
+            "title": images['title'][image_idx],
+            "url": images['url'][image_idx],
+            "path": images['path'][image_idx],
+            "pic": images['pic'][image_idx],
+            "caption": caption_map[doc_id]
+          })
     # TODO
   system_message = system_message.repalce('{','{{')
   system_message = system_message.replace('}','}}')
