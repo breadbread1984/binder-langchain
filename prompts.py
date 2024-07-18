@@ -1193,21 +1193,23 @@ NeuralSQL: SELECT `males` + `females` FROM w WHERE `language` = 'german'"""
 
 def get_binder_template(dataset,
                         tokenizer,
-                        prompt_style = 'create_table_select_3_full_table',
+                        prompt_style = 'select_3_full_table',
                         generate_type = 'answer',
                         title: str = None,
                         table: pd.DataFrame = None,):
   assert dataset in {'mmqa', 'tab_fact', 'wikiq'}
-  assert prompt_style in {'create_table_select_3_full_table',
-                          'create_table_select_full_table',
-                          'create_table_select_3',
-                          'create_table',
-                          'create_table_select_3_full_table_w_all_passage_image',
-                          'create_table_select_3_full_table_w_gold_passage_image',
+  assert prompt_style in {'select_3_full_table',
+                          'select_full_table',
+                          'select_3',
+                          'no_select',
+                          'select_3_full_table_w_all_passage_image',
+                          'select_3_full_table_w_gold_passage_image',
                           'no_table'}
   assert generate_type in {'answer', 'nsql', 'sql', 'npython', 'python'}
   system_message = "I will give you some x-y examples followed by a x, you need to give me the y, and no other content."
+  # few shot cases
   user_message = few_shot_case(dataset) + "\n\n"
+  # instruction
   if generate_type == 'answer':
     user_message += """\n-- Answer the question based on the given table below.\n\n"""
   elif generate_type == 'nsql':
@@ -1221,7 +1223,7 @@ def get_binder_template(dataset,
   else:
     raise NotImplementedError
   if prompt_style != 'no_table':
-    # create table sql
+    # table structure described by sql
     user_message += "CREATE TABLE %s(" % title
     for idx, header in enumerate(df.columns):
       column_type = {'int64':'int',
@@ -1232,7 +1234,49 @@ def get_binder_template(dataset,
         user_message += "\t%s %s,\n" % (header, column_type)
       else:
         user_message += "\t%s %s)\n" % (header, column_type)
-  # 
+  # sql example and its execution result
+  def sql_example(df, num_rows, few_shot_demonstration = True):
+    if prompt_style == 'select_full_table':
+      string = '/*\nAll rows of the table:\nSELECT * FROM w;\n'
+    elif prompt_style == 'select_3':
+      string = '/*\n{} example rows:\nSELECT * FROM w LIMIT {};\n'.format(num_rows, num_rows)
+    elif few_shot_demonstration is True and prompt_style in \
+                ["select_3_full_table",
+                 "select_3_full_table_w_gold_passage_image",
+                 "select_3_full_table_w_all_passage_image"]:
+      string = '/*\n{} example rows:\nSELECT * FROM w LIMIT {};\n'.format(num_rows, num_rows)
+    elif few_shot_demonstration is False and prompt_style in \
+                ["select_3_full_table",
+                 "select_3_full_table_w_gold_passage_image",
+                 "select_3_full_table_w_all_passage_image"]:
+      string = '/*\nAll rows of the table:\nSELECT * FROM w;\n'
+    else:
+      raise ValueError(f"Select x prompt style {self.prompt_style} is not supported.")
+
+    for column_id, header in enumerate(df.columns):
+      string += str(header)
+      if column_id != len(df.columns) - 1:
+        string += '\t'
+    string += '\n'
+
+    for row_id, row in df.iloc[:num_rows].iterrows():
+      for column_id, header in enumerate(df.columns):
+        string += str(row[header])
+        if column_id != len(df.columns) - 1:
+          string += '\t'
+      string += '\n'
+    string += '*/\n'
+
+    return string
+  if prompt_style in ['select_full_table', 'select_3_full_table']:
+    user_message += sql_example(df = table, num_rows = table.shape[0], few_shot_demonstration = False)
+  elif prompt_style in ['select_3']:
+    user_message += sql_example(df = table, num_rows = 3, few_shot_demonstration = False)
+  elif prompt_style in ['no_select', 'no_table']:
+    pass
+  elif prompt_style in ['select_3_full_table_w_all_passage_image']:
+    user_message += sql_example(df = table, num_rows = table.shape[0], few_shot_deomonstration = False)
+    # TODO
   messages = [
     {'role': 'system', 'content': system_message},
     {'role': 'user', 'content': user_message}]
