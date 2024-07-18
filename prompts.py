@@ -1226,18 +1226,21 @@ def get_binder_template(dataset,
     user_message += """\n-- Parse the question into Python based on the given table below.\n\n"""
   else:
     raise NotImplementedError
-  if prompt_style != 'no_table':
-    # table structure described by sql
-    user_message += "CREATE TABLE %s(" % title
+  def create_table_prompt(df, title):
+    string = "CREATE TABLE %s(\n" % title
     for idx, header in enumerate(df.columns):
       column_type = {'int64':'int',
                      'float64':'real',
                      'datetime64':'datetime',
                      'text':'text'}[df[header].dtype]
       if idx != len(df.columns) - 1:
-        user_message += "\t%s %s,\n" % (header, column_type)
+        string += "\t%s %s,\n" % (header, column_type)
       else:
-        user_message += "\t%s %s)\n" % (header, column_type)
+        string += "\t%s %s)\n" % (header, column_type)
+    return string
+  if prompt_style != 'no_table':
+    # table structure described by sql
+    user_message += create_table_prompt(df, title)
   # sql example and its execution result
   def sql_example(df, num_rows, few_shot_demonstration = True):
     if prompt_style == 'select_full_table':
@@ -1272,6 +1275,40 @@ def get_binder_template(dataset,
     string += '*/\n'
 
     return string
+  def passage_prompt(passages, only_title):
+    if len(passages) == 0:
+      return ""
+    passage_table_prompt = ""
+    _header = []
+    _rows = [[]]
+    for passage in passages:
+      _header.append(passage['title'])
+      _rows[0].append(passage['text'])
+    passage_table = prepare_df_for_neuraldb_from_table({"header": _header, "rows": _rows})
+    passage_table_prompt += create_table_prompt(passage_table, "Passages")
+    if not only_title:
+      passage_table_prompt += sql_example(
+        df=passage_table,
+        num_rows=passage_table.shape[0]
+      )
+    return passage_table_prompt
+  def image_prompt(images, only_title):
+    if len(images) == 0:
+      return ""
+    image_table_prompt = ""
+    _header = []
+    _rows = [[]]
+    for image in images:
+      _header.append(image['title'])
+      _rows[0].append(image['caption'])
+    image_table = prepare_df_for_neuraldb_from_table({"header": _header, "rows": _rows})
+    image_table_prompt += create_table_prompt(image_table, "Images")
+    if not only_title:
+      image_table_prompt += sql_example(
+        df=image_table,
+        num_rows=image_table.shape[0]
+      )
+    return image_table_prompt
   if prompt_style in ['select_full_table', 'select_3_full_table']:
     user_message += sql_example(df = table, num_rows = table.shape[0], few_shot_demonstration = False)
   elif prompt_style in ['select_3']:
