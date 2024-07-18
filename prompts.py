@@ -16,7 +16,8 @@ def get_binder_template(dataset,
                         table: pd.DataFrame = None,
                         passages: dict = None,
                         images: dict = None,
-                        supporting_context: dict = None):
+                        supporting_context: dict = None,
+                        only_title = False):
   assert dataset in {'mmqa', 'tab_fact', 'wikiq'}
   assert prompt_style in {'select_3_full_table',
                           'select_full_table',
@@ -83,7 +84,7 @@ def get_binder_template(dataset,
       for doc_id, doc_part in zip(supporting_context['doc_id'], supporting_context['doc_part']):
         if doc_part == 'text':
           passage_idx = passages['id'].index(doc_id)
-          passages.append({
+          all_passages.append({
             'id': passages['id'][passage_idx],
             'title': passages['title'][passage_idx],
             'url': passages['url'][passage_idx],
@@ -91,7 +92,7 @@ def get_binder_template(dataset,
           })
         elif doc_part == 'image':
           image_idx = images['id'].index(doc_id)
-          images.append({
+          all_images.append({
             "id": images['id'][image_idx],
             "title": images['title'][image_idx],
             "url": images['url'][image_idx],
@@ -99,14 +100,28 @@ def get_binder_template(dataset,
             "pic": images['pic'][image_idx],
             "caption": caption_map[doc_id]
           })
-    # TODO
+	user_message += passage_prompt(passages = all_passages, only_title = only_title)
+	user_message += image_prompt(images = all_images, only_title = only_title)
+  else:
+	raise NotImplementedError
   system_message = system_message.repalce('{','{{')
   system_message = system_message.replace('}','}}')
   user_message = user_message.replace('{','{{')
   user_message = user_message.replace('}','}}')
+  user_message += "Q: {question}\n" + \
+	{
+	  'answer': 'A: ',
+	  'nsql': 'NeuralSQL: ',
+	  'sql': 'SQL: ',
+	  'npython': 'NeuralPython: ',
+	  'python': 'Python: '
+	}[generate_type]
   messages = [
     {'role': 'system', 'content': system_message},
     {'role': 'user', 'content': user_message}]
+  prompt = tokenizer.apply_chat_template(messages, tokenize = False, add_generating_prompt = True)
+  template = PromptTemplate(template = prompt, input_variables = ['question'])
+  return template
 
 def few_shot_case(dataset = "tab_fact"):
   assert dataset in {'mmqa', 'tab_fact', 'wikiq'}
