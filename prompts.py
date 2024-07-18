@@ -6,6 +6,107 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts.promtp import PromptTemplate
 from langchain.output_parsers.regex import RegexParser
+from utils import *
+
+def get_binder_template(dataset,
+                        tokenizer,
+                        prompt_style = 'select_3_full_table',
+                        generate_type = 'answer',
+                        title: str = None,
+                        table: pd.DataFrame = None,
+                        passages: dict = None,
+                        images: dict = None,
+                        supporting_context: dict = None):
+  assert dataset in {'mmqa', 'tab_fact', 'wikiq'}
+  assert prompt_style in {'select_3_full_table',
+                          'select_full_table',
+                          'select_3',
+                          'no_select',
+                          'select_3_full_table_w_all_passage_image',
+                          'select_3_full_table_w_gold_passage_image',
+                          'no_table'}
+  assert generate_type in {'answer', 'nsql', 'sql', 'npython', 'python'}
+  system_message = "I will give you some x-y examples followed by a x, you need to give me the y, and no other content."
+  # few shot cases
+  user_message = few_shot_case(dataset) + "\n\n"
+  # instruction
+  if generate_type == 'answer':
+    user_message += """\n-- Answer the question based on the given table below.\n\n"""
+  elif generate_type == 'nsql':
+    user_message += """\n-- Parse the question into NeuralSQL based on the given table below.\n\n"""
+  elif generate_type == 'sql':
+    user_message += """\n-- Parse the question into SQL based on the given table below.\n\n"""
+  elif generate_type == 'npython':
+    user_message += """\n-- Parse the question into NeuralPython based on the given table below.\n\n"""
+  elif generate_type == 'python':
+    user_message += """\n-- Parse the question into Python based on the given table below.\n\n"""
+  else:
+    raise NotImplementedError
+
+  if prompt_style != 'no_table':
+    # table structure described by sql
+    user_message += create_table_prompt(df, title)
+  # sql example and its execution result
+  if prompt_style in ['select_full_table', 'select_3_full_table']:
+    user_message += sql_example(prompt_style, df = table, num_rows = table.shape[0], few_shot_demonstration = False)
+  elif prompt_style in ['select_3']:
+    user_message += sql_example(prompt_style, df = table, num_rows = 3, few_shot_demonstration = False)
+  elif prompt_style in ['no_select', 'no_table']:
+    pass
+  elif prompt_style in ['select_3_full_table_w_all_passage_image','select_3_full_table_w_gold_passage_image']:
+    assert dataset == 'mmqa'
+    assert passages is not None and images is not None
+    if prompt_style == 'select_3_full_table_w_gold_passage_image': assert supporting_context is not None
+    user_message += sql_example(prompt_style, df = table, num_rows = table.shape[0], few_shot_deomonstration = False)
+    all_passages, all_images = list(), list()
+    with open(join('datasets','mmqa_captions.json'),'r') as f:
+      caption_map = json.load(f)
+    if prompt_style == 'select_3_full_table_w_all_passage_image':
+      for passage_idx in range(len(passages['id'])):
+        all_passages.append({
+          'id': passages['id'][passage_idx],
+          'title': passages['title'][passage_idx],
+          'url': passages['url'][passage_idx],
+          'text': passages['text'][passage_idx]
+        })
+
+      for image_idx in range(len(images['id'])):
+        all_images.append({
+          "id": images['id'][image_idx],
+          "title": images['title'][image_idx],
+          "url": images['url'][image_idx],
+          "path": images['path'][image_idx],
+          "pic": images['pic'][image_idx],
+          "caption": caption_map[images['id'][image_idx]]
+        })
+    else:
+      for doc_id, doc_part in zip(supporting_context['doc_id'], supporting_context['doc_part']):
+        if doc_part == 'text':
+          passage_idx = passages['id'].index(doc_id)
+          passages.append({
+            'id': passages['id'][passage_idx],
+            'title': passages['title'][passage_idx],
+            'url': passages['url'][passage_idx],
+            'text': passages['text'][passage_idx]
+          })
+        elif doc_part == 'image':
+          image_idx = images['id'].index(doc_id)
+          images.append({
+            "id": images['id'][image_idx],
+            "title": images['title'][image_idx],
+            "url": images['url'][image_idx],
+            "path": images['path'][image_idx],
+            "pic": images['pic'][image_idx],
+            "caption": caption_map[doc_id]
+          })
+    # TODO
+  system_message = system_message.repalce('{','{{')
+  system_message = system_message.replace('}','}}')
+  user_message = user_message.replace('{','{{')
+  user_message = user_message.replace('}','}}')
+  messages = [
+    {'role': 'system', 'content': system_message},
+    {'role': 'user', 'content': user_message}]
 
 def few_shot_case(dataset = "tab_fact"):
   assert dataset in {'mmqa', 'tab_fact', 'wikiq'}
@@ -1191,181 +1292,3 @@ NeuralSQL: SELECT `males` + `females` FROM w WHERE `language` = 'german'"""
   else:
     raise NotImplementedError
   return examples
-
-def get_binder_template(dataset,
-                        tokenizer,
-                        prompt_style = 'select_3_full_table',
-                        generate_type = 'answer',
-                        title: str = None,
-                        table: pd.DataFrame = None,
-                        passages: dict = None,
-                        images: dict = None,
-                        supporting_context: dict = None):
-  assert dataset in {'mmqa', 'tab_fact', 'wikiq'}
-  assert prompt_style in {'select_3_full_table',
-                          'select_full_table',
-                          'select_3',
-                          'no_select',
-                          'select_3_full_table_w_all_passage_image',
-                          'select_3_full_table_w_gold_passage_image',
-                          'no_table'}
-  assert generate_type in {'answer', 'nsql', 'sql', 'npython', 'python'}
-  system_message = "I will give you some x-y examples followed by a x, you need to give me the y, and no other content."
-  # few shot cases
-  user_message = few_shot_case(dataset) + "\n\n"
-  # instruction
-  if generate_type == 'answer':
-    user_message += """\n-- Answer the question based on the given table below.\n\n"""
-  elif generate_type == 'nsql':
-    user_message += """\n-- Parse the question into NeuralSQL based on the given table below.\n\n"""
-  elif generate_type == 'sql':
-    user_message += """\n-- Parse the question into SQL based on the given table below.\n\n"""
-  elif generate_type == 'npython':
-    user_message += """\n-- Parse the question into NeuralPython based on the given table below.\n\n"""
-  elif generate_type == 'python':
-    user_message += """\n-- Parse the question into Python based on the given table below.\n\n"""
-  else:
-    raise NotImplementedError
-  def create_table_prompt(df, title):
-    string = "CREATE TABLE %s(\n" % title
-    for idx, header in enumerate(df.columns):
-      column_type = {'int64':'int',
-                     'float64':'real',
-                     'datetime64':'datetime',
-                     'text':'text'}[df[header].dtype]
-      if idx != len(df.columns) - 1:
-        string += "\t%s %s,\n" % (header, column_type)
-      else:
-        string += "\t%s %s)\n" % (header, column_type)
-    return string
-  if prompt_style != 'no_table':
-    # table structure described by sql
-    user_message += create_table_prompt(df, title)
-  # sql example and its execution result
-  def sql_example(df, num_rows, few_shot_demonstration = True):
-    if prompt_style == 'select_full_table':
-      string = '/*\nAll rows of the table:\nSELECT * FROM w;\n'
-    elif prompt_style == 'select_3':
-      string = '/*\n{} example rows:\nSELECT * FROM w LIMIT {};\n'.format(num_rows, num_rows)
-    elif few_shot_demonstration is True and prompt_style in \
-                ["select_3_full_table",
-                 "select_3_full_table_w_gold_passage_image",
-                 "select_3_full_table_w_all_passage_image"]:
-      string = '/*\n{} example rows:\nSELECT * FROM w LIMIT {};\n'.format(num_rows, num_rows)
-    elif few_shot_demonstration is False and prompt_style in \
-                ["select_3_full_table",
-                 "select_3_full_table_w_gold_passage_image",
-                 "select_3_full_table_w_all_passage_image"]:
-      string = '/*\nAll rows of the table:\nSELECT * FROM w;\n'
-    else:
-      raise ValueError(f"Select x prompt style {self.prompt_style} is not supported.")
-
-    for column_id, header in enumerate(df.columns):
-      string += str(header)
-      if column_id != len(df.columns) - 1:
-        string += '\t'
-    string += '\n'
-
-    for row_id, row in df.iloc[:num_rows].iterrows():
-      for column_id, header in enumerate(df.columns):
-        string += str(row[header])
-        if column_id != len(df.columns) - 1:
-          string += '\t'
-      string += '\n'
-    string += '*/\n'
-
-    return string
-  def passage_prompt(passages, only_title):
-    if len(passages) == 0:
-      return ""
-    passage_table_prompt = ""
-    _header = []
-    _rows = [[]]
-    for passage in passages:
-      _header.append(passage['title'])
-      _rows[0].append(passage['text'])
-    passage_table = prepare_df_for_neuraldb_from_table({"header": _header, "rows": _rows})
-    passage_table_prompt += create_table_prompt(passage_table, "Passages")
-    if not only_title:
-      passage_table_prompt += sql_example(
-        df=passage_table,
-        num_rows=passage_table.shape[0]
-      )
-    return passage_table_prompt
-  def image_prompt(images, only_title):
-    if len(images) == 0:
-      return ""
-    image_table_prompt = ""
-    _header = []
-    _rows = [[]]
-    for image in images:
-      _header.append(image['title'])
-      _rows[0].append(image['caption'])
-    image_table = prepare_df_for_neuraldb_from_table({"header": _header, "rows": _rows})
-    image_table_prompt += create_table_prompt(image_table, "Images")
-    if not only_title:
-      image_table_prompt += sql_example(
-        df=image_table,
-        num_rows=image_table.shape[0]
-      )
-    return image_table_prompt
-  if prompt_style in ['select_full_table', 'select_3_full_table']:
-    user_message += sql_example(df = table, num_rows = table.shape[0], few_shot_demonstration = False)
-  elif prompt_style in ['select_3']:
-    user_message += sql_example(df = table, num_rows = 3, few_shot_demonstration = False)
-  elif prompt_style in ['no_select', 'no_table']:
-    pass
-  elif prompt_style in ['select_3_full_table_w_all_passage_image','select_3_full_table_w_gold_passage_image']:
-    assert dataset == 'mmqa'
-    assert passages is not None and images is not None
-    if prompt_style == 'select_3_full_table_w_gold_passage_image': assert supporting_context is not None
-    user_message += sql_example(df = table, num_rows = table.shape[0], few_shot_deomonstration = False)
-    all_passages, all_images = list(), list()
-    with open(join('datasets','mmqa_captions.json'),'r') as f:
-      caption_map = json.load(f)
-    if prompt_style == 'select_3_full_table_w_all_passage_image':
-      for passage_idx in range(len(passages['id'])):
-        all_passages.append({
-          'id': passages['id'][passage_idx],
-          'title': passages['title'][passage_idx],
-          'url': passages['url'][passage_idx],
-          'text': passages['text'][passage_idx]
-        })
-
-      for image_idx in range(len(images['id'])):
-        all_images.append({
-          "id": images['id'][image_idx],
-          "title": images['title'][image_idx],
-          "url": images['url'][image_idx],
-          "path": images['path'][image_idx],
-          "pic": images['pic'][image_idx],
-          "caption": caption_map[images['id'][image_idx]]
-        })
-    else:
-      for doc_id, doc_part in zip(supporting_context['doc_id'], supporting_context['doc_part']):
-        if doc_part == 'text':
-          passage_idx = passages['id'].index(doc_id)
-          passages.append({
-            'id': passages['id'][passage_idx],
-            'title': passages['title'][passage_idx],
-            'url': passages['url'][passage_idx],
-            'text': passages['text'][passage_idx]
-          })
-        elif doc_part == 'image':
-          image_idx = images['id'].index(doc_id)
-          images.append({
-            "id": images['id'][image_idx],
-            "title": images['title'][image_idx],
-            "url": images['url'][image_idx],
-            "path": images['path'][image_idx],
-            "pic": images['pic'][image_idx],
-            "caption": caption_map[doc_id]
-          })
-    # TODO
-  system_message = system_message.repalce('{','{{')
-  system_message = system_message.replace('}','}}')
-  user_message = user_message.replace('{','{{')
-  user_message = user_message.replace('}','}}')
-  messages = [
-    {'role': 'system', 'content': system_message},
-    {'role': 'user', 'content': user_message}]
