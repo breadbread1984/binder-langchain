@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import json
 import pandas as pd
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.output_parsers import JsonOutputParser
@@ -1196,7 +1197,10 @@ def get_binder_template(dataset,
                         prompt_style = 'select_3_full_table',
                         generate_type = 'answer',
                         title: str = None,
-                        table: pd.DataFrame = None,):
+                        table: pd.DataFrame = None,
+                        passages: dict = None,
+                        images: dict = None,
+                        supporting_context: dict = None):
   assert dataset in {'mmqa', 'tab_fact', 'wikiq'}
   assert prompt_style in {'select_3_full_table',
                           'select_full_table',
@@ -1275,8 +1279,34 @@ def get_binder_template(dataset,
   elif prompt_style in ['no_select', 'no_table']:
     pass
   elif prompt_style in ['select_3_full_table_w_all_passage_image']:
+    assert dataset == 'mmqa'
+    assert passages is not None and images is not None
     user_message += sql_example(df = table, num_rows = table.shape[0], few_shot_deomonstration = False)
+    all_passages, all_images = list(), list()
+    with open(join('datasets','mmqa_captions.json'),'r') as f:
+      caption_map = json.load(f)
+    for passage_idx in range(len(passages['id'])):
+      all_passages.append({
+        'id': passages['id'][passage_idx],
+        'title': passages['title'][passage_idx],
+        'url': passages['url'][passage_idx],
+        'text': passages['text'][passage_idx]
+      })
+
+    for image_idx in range(len(images['id'])):
+      all_images.append({
+        "id": images['id'][image_idx],
+        "title": images['title'][image_idx],
+        "url": images['url'][image_idx],
+        "path": images['path'][image_idx],
+        "pic": images['pic'][image_idx],
+        "caption": caption_map[images['id'][image_idx]]
+      })
     # TODO
+  system_message = system_message.repalce('{','{{')
+  system_message = system_message.replace('}','}}')
+  user_message = user_message.replace('{','{{')
+  user_message = user_message.replace('}','}}')
   messages = [
     {'role': 'system', 'content': system_message},
     {'role': 'user', 'content': user_message}]
