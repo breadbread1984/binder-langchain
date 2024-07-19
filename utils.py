@@ -1,5 +1,25 @@
 #!/usr/bin/python3
 
+from os.path import join
+from datasets import load_dataset
+
+def load_data_split(dataset_to_load, split):
+  dataset_split_loaded = load_dataset(path = join('datasets', '%s.py' % dataset_to_load), cache_dir = join('datasets', "data"), trust_remote_code = True)[split]
+  samples = list()
+  if dataset_to_load == 'tab_fact':
+    for data_item in dataset_split_loaded:
+      data_item['question'] = data_item['statement']
+      data_item['answer_text'] = data_item['label']
+      data_item['table']['page_title'] = data_item['table']['caption']
+      samples.append(data_item)
+  elif dataset_to_load == 'mmqa':
+    for data_item in dataset_split_loaded:
+      data_item['table']['page_title'] = data_item['table']['title']
+      samples.append(data_item)
+  else:
+    raise NotImplementedError
+  return samples
+
 def create_table_prompt(df, title):
   string = "CREATE TABLE %s(\n" % title
   for idx, header in enumerate(df.columns):
@@ -58,7 +78,6 @@ def prepare_df_for_neuraldb_from_table(table: Dict, add_row_id=True, normalize=T
         df = pd.DataFrame(data=rows, columns=header)
 
     return df
-
 
 def convert_df_type(df: pd.DataFrame, lower_case=True):
     """
