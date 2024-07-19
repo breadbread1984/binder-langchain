@@ -46,3 +46,7 @@ def main(unused_argv):
     )
     chain = template | llm
     response = chain.invoke({'question': ''})
+
+if __name__ == "__main__":
+  add_options()
+  app.run(main)
