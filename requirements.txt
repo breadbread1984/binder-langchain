@@ -1,0 +1,8 @@
+langchain
+langchain-openai
+langchain-community
+langchain-experimental
+huggingface_hub
+transformers
+datasets
+pandas
