@@ -7,9 +7,8 @@ import pandas as pd
 from typing import Dict, List
 import uuid
 
-from normalizer import convert_df_type, prepare_df_for_neuraldb_from_table
-from mmqa.image_stuff import get_caption
-
+from .normalizer import convert_df_type, prepare_df_for_neuraldb_from_table
+from .mmqa.image_stuff import get_caption
 
 def check_in_and_return(key: str, source: dict):
     # `` wrapped means as a whole
