@@ -45,7 +45,9 @@ def main(unused_argv):
       table = sample['table'],
     )
     chain = template | llm
-    response = chain.invoke({'question': ''})
+    response = chain.invoke({'question': sample['question']})
+    print(response)
+    exit()
 
 if __name__ == "__main__":
   add_options()
