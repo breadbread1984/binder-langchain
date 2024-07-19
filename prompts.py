@@ -44,9 +44,8 @@ def get_binder_template(dataset,
     user_message += """\n-- Parse the question into Python based on the given table below.\n\n"""
   else:
     raise NotImplementedError
-
+  # data structure
   if prompt_style != 'no_table':
-    # table structure described by sql
     user_message += create_table_prompt(df, title)
   # sql example and its execution result
   if prompt_style in ['select_full_table', 'select_3_full_table']:
