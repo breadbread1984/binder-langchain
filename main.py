@@ -54,7 +54,7 @@ def main(unused_argv):
     sql = chain.invoke({'question': sample['question']})
     try:
       sub_table = db.execute_query(sql)
-    except e as Exception:
+    except Exception as e:
       print(e)
       continue
     answer = extract_answers(sub_table)
