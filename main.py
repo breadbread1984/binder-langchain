@@ -52,7 +52,11 @@ def main(unused_argv):
     )
     chain = template | llm | parser
     sql = chain.invoke({'question': sample['question']})
-    sub_table = db.execute_query(sql)
+    try:
+      sub_table = db.execute_query(sql)
+    except e as Exception:
+      print(e)
+      continue
     answer = extract_answers(sub_table)
     if isinstance(answer, str): answer = [answer]
     score += Evaluator().evaluate(answer, sample['label'], dataset = FLAGS.dataset, question = sample['question'])
