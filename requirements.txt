@@ -11,3 +11,4 @@ recognizers-text-suite
 fuzzywuzzy
 emoji==1.7
 sqlparse
+word2number
