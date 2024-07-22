@@ -59,6 +59,7 @@ def main(unused_argv):
       continue
     answer = extract_answers(sub_table)
     if isinstance(answer, str): answer = [answer]
+    if len(answer) == 0: continue
     score += Evaluator().evaluate(answer, sample['label'], dataset = FLAGS.dataset, question = sample['question'])
   print('score: %f' % (score / len(samples)))
 
