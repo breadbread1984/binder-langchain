@@ -9,7 +9,7 @@ from fuzzywuzzy import fuzz
 from .extraction_from_sql import *
 from .all_keywords import ALL_KEY_WORDS
 
-#culture = Culture.English
+culture = Culture.English
 
 
 def str_normalize(user_input, recognition_types=None):
