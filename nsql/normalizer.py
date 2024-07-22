@@ -1,7 +1,7 @@
 from typing import List, Dict
 import pandas as pd
-#import recognizers_suite
-#from recognizers_suite import Culture
+import recognizers_suite
+from recognizers_suite import Culture
 import re
 import unicodedata
 from fuzzywuzzy import fuzz

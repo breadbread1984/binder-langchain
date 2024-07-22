@@ -7,4 +7,5 @@ transformers
 datasets
 pandas
 records
+recognizers-text-suite
 fuzzywuzzy
