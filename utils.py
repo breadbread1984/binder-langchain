@@ -5,11 +5,11 @@ from typing import Dict
 import pandas as pd
 from datasets import load_dataset
 from nsql.normalizer import str_normalize
-from datasets.wtq_evaluator import to_value_list, check_denotation
-from datasets.mmqa_evaluator import acc
+from dataset.wtq_evaluator import to_value_list, check_denotation
+from dataset.mmqa_evaluator import acc
 
 def load_data_split(dataset_to_load, split):
-  dataset_split_loaded = load_dataset(path = join('datasets', '%s.py' % dataset_to_load), cache_dir = join('datasets', "data"), trust_remote_code = True)[split]
+  dataset_split_loaded = load_dataset(path = join('dataset', '%s.py' % dataset_to_load), cache_dir = join('datasets', "data"), trust_remote_code = True)[split]
   samples = list()
   if dataset_to_load == 'tab_fact':
     for data_item in dataset_split_loaded:
