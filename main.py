@@ -23,6 +23,11 @@ def add_options():
   flags.DEFINE_integer('n_shots', default = 8, help = 'few shot example number')
   flags.DEFINE_boolean('locally', default = False, help = 'run locally')
 
+def parser(response):
+  if response.startswith('assistant\n\n'):
+    response = response.replace('assistant\n\n','')
+  return response
+
 def main(unused_argv):
   tokenizer, llm = {
     'llama3': Llama3,
@@ -42,7 +47,7 @@ def main(unused_argv):
       title = db.get_table_title(),
       table = db.get_table_df(),
     )
-    chain = template | llm
+    chain = template | llm | parser
     response = chain.invoke({'question': sample['question']})
     print(response)
     exit()
