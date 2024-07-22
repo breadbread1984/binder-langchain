@@ -9,3 +9,4 @@ pandas
 records
 recognizers-text-suite
 fuzzywuzzy
+emoji
