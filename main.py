@@ -3,7 +3,7 @@
 from absl import flags, app
 from nsql.database import NeuralDB
 from nsql.parser import extract_answers
-from utils import load_data_split
+from utils import load_data_split, Evaluator
 from models import *
 from prompts import get_binder_template
 
