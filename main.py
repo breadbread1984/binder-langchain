@@ -2,6 +2,7 @@
 
 from absl import flags, app
 from nsql.database import NeuralDB
+from nsql.parser import extract_answers
 from utils import load_data_split
 from models import *
 from prompts import get_binder_template
@@ -36,6 +37,7 @@ def main(unused_argv):
     'codeqwen': CodeQwen1_5,
   }[FLAGS.model](FLAGS.locally)
   samples = load_data_split(FLAGS.dataset, split = FLAGS.split)
+  score = 0
   for sample in samples:
     db = NeuralDB(tables = [{'title': sample['table']['page_title'], 'table': sample['table']}])
     template = get_binder_template(
@@ -48,9 +50,12 @@ def main(unused_argv):
       table = db.get_table_df(),
     )
     chain = template | llm | parser
-    response = chain.invoke({'question': sample['question']})
-    print(response)
-    exit()
+    sql = chain.invoke({'question': sample['question']})
+    sub_table = db.execute_query(sql)
+    answer = extract_answers(sub_table)
+    if isinstance(answer, str): answer = [answer]
+    score += Evaluator().evaluate(answer, sample['label'], dataset = FLAGS.dataset, question = sample['question'])
+  print('score: %f' % (score / len(samples)))
 
 if __name__ == "__main__":
   add_options()
