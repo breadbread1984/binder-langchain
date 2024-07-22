@@ -30,7 +30,8 @@ def create_table_prompt(df, title):
   for idx, header in enumerate(df.columns):
     column_type = {'int64':'int',
                    'float64':'real',
-                   'datetime64':'datetime',
+                   'datetime64[ns]':'datetime',
+                   'datetime64[tz]':'datatime',
                    'object':'text'}[str(df[header].dtype)]
     if idx != len(df.columns) - 1:
       string += "\t%s %s,\n" % (header, column_type)
