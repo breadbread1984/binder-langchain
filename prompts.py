@@ -46,7 +46,7 @@ def get_binder_template(dataset,
     raise NotImplementedError
   # data structure
   if prompt_style != 'no_table':
-    user_message += create_table_prompt(df, title)
+    user_message += create_table_prompt(df = table, title = title)
   # sql example and its execution result
   if prompt_style in ['select_full_table', 'select_3_full_table']:
     user_message += sql_example(prompt_style, df = table, num_rows = table.shape[0], few_shot_demonstration = False)
