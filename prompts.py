@@ -109,13 +109,13 @@ def get_binder_template(dataset,
   user_message = user_message.replace('{','{{')
   user_message = user_message.replace('}','}}')
   user_message += "Q: {question}\n" + \
-	{
-	  'answer': 'A: ',
-	  'nsql': 'NeuralSQL: ',
-	  'sql': 'SQL: ',
-	  'npython': 'NeuralPython: ',
-	  'python': 'Python: '
-	}[generate_type]
+    {
+      'answer': 'A: ',
+      'nsql': 'NeuralSQL: ',
+      'sql': 'SQL: ',
+      'npython': 'NeuralPython: ',
+      'python': 'Python: '
+    }[generate_type]
   messages = [
     {'role': 'system', 'content': system_message},
     {'role': 'user', 'content': user_message}
@@ -126,17 +126,17 @@ def get_binder_template(dataset,
 
 def few_shot_case(dataset = "tab_fact", n_shots = 8):
   file_path = {
-	'mmqa': join('datasets', 'mmqa_binder.txt'),
-	'tab_fact': join('datasets', 'tab_fact_binder.txt'),
-	'wikiq': join('datasets', 'wikiq_binder.txt')
+    'mmqa': join('datasets', 'mmqa_binder.txt'),
+    'tab_fact': join('datasets', 'tab_fact_binder.txt'),
+    'wikiq': join('datasets', 'wikiq_binder.txt')
   }[dataset]
   with open(file_path, 'r') as f:
-	lines = f.readlines()
+    lines = f.readlines()
   few_shot_prompt_list = []
   one_shot_prompt = ''
   last_line = None
   for line in lines:
-	if line == '\n' and last_line == '\n':
+    if line == '\n' and last_line == '\n':
       few_shot_prompt_list.append(one_shot_prompt)
       one_shot_prompt = ''
     else:
