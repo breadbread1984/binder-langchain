@@ -104,7 +104,7 @@ def get_binder_template(dataset,
     user_message += image_prompt(images = all_images, only_title = only_title)
   else:
     raise NotImplementedError
-  system_message = system_message.repalce('{','{{')
+  system_message = system_message.replace('{','{{')
   system_message = system_message.replace('}','}}')
   user_message = user_message.replace('{','{{')
   user_message = user_message.replace('}','}}')
