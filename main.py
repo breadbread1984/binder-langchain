@@ -32,7 +32,7 @@ def main(unused_argv):
   }[FLAGS.model](FLAGS.locally)
   samples = load_data_split(FLAGS.dataset, split = FLAGS.split)
   for sample in samples:
-    db = NueralDB(tables = [{'title': sample['table']['page_title'], 'table': sample['table']}])
+    db = NeuralDB(tables = [{'title': sample['table']['page_title'], 'table': sample['table']}])
     sample['table'] = db.get_table_df()
     sample['title'] = db.get_table_title()
     template = get_binder_template(
