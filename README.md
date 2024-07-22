@@ -12,6 +12,8 @@ python3 -m pip install -r requirements.txt
 
 ## run evaluation
 
+it is hard to introduce huggingface's beam search into langchain framework, therefore the consistency of the LLM generation is not included in this implement
+
 ```shell
 python3 main.py --dataset (tab_fact|mmqa|wikiq) --model (llama3|codellama|qwen2|codeqwen) [--locally]
 ```
