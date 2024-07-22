@@ -4,7 +4,7 @@ import json
 import pandas as pd
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts.promtp import PromptTemplate
+from langchain_core.prompts.prompt import PromptTemplate
 from langchain.output_parsers.regex import RegexParser
 from utils import *
 
