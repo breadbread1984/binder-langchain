@@ -11,7 +11,7 @@ FLAGS = flags.FLAGS
 def add_options():
   flags.DEFINE_enum('dataset', default = 'tab_fact', enum_values = {'tab_fact', 'mmqa', 'wikiq'}, help = 'available dataset')
   flags.DEFINE_enum('split', default = 'test', enum_values = {'train', 'validation', 'test'}, help = 'dataset split')
-  flags.DEFINE_enum('model', default = 'qwen2', enum_values = {'llama3', 'codellama', 'qwen2', 'codeqwen'}, help = 'model name')
+  flags.DEFINE_enum('model', default = 'llama3', enum_values = {'llama3', 'codellama', 'qwen2', 'codeqwen'}, help = 'model name')
   flags.DEFINE_enum('prompt_style', default = 'select_3_full_table', enum_values = {'select_3_full_table',
                                                                'select_full_table',
                                                                'select_3',
