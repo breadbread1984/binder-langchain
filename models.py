@@ -98,7 +98,7 @@ def Qwen2(locally = False):
   return tokenizer, llm
 
 def CodeQwen1_5(locally = False):
-  login(token = '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'
+  login(token = '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')
   tokenizer = AutoTokenizer.from_pretrained('Qwen/CodeQwen1.5-7B-Chat')
   if locally:
     llm = HuggingFacePipeline.from_model_id(

@@ -1,15 +1,15 @@
 from typing import List, Dict
 import pandas as pd
-import recognizers_suite
-from recognizers_suite import Culture
+#import recognizers_suite
+#from recognizers_suite import Culture
 import re
 import unicodedata
 from fuzzywuzzy import fuzz
 
-from utils.sql.extraction_from_sql import *
-from utils.sql.all_keywords import ALL_KEY_WORDS
+from .extraction_from_sql import *
+from .all_keywords import ALL_KEY_WORDS
 
-culture = Culture.English
+#culture = Culture.English
 
 
 def str_normalize(user_input, recognition_types=None):
