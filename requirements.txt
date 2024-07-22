@@ -9,4 +9,4 @@ pandas
 records
 recognizers-text-suite
 fuzzywuzzy
-emoji
+emoji==1.7
