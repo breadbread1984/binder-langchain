@@ -9,10 +9,10 @@ from prompts import get_binder_template
 FLAGS = flags.FLAGS
 
 def add_options():
-  flags.DEFINE_enum('dataset', default = 'tab_fact', num_values = {'tab_fact', 'mmqa', 'wikiq'}, help = 'available dataset')
-  flags.DEFINE_enum('split', default = 'test', num_values = {'train', 'validation', 'test'}, help = 'dataset split')
-  flags.DEFINE_enum('model', default = 'qwen2', num_values = {'llama3', 'codellama', 'qwen2', 'codeqwen'}, help = 'model name')
-  flags.DEFINE_enum('prompt_style', default = 'select_3_full_table', num_values = {'select_3_full_table',
+  flags.DEFINE_enum('dataset', default = 'tab_fact', enum_values = {'tab_fact', 'mmqa', 'wikiq'}, help = 'available dataset')
+  flags.DEFINE_enum('split', default = 'test', enum_values = {'train', 'validation', 'test'}, help = 'dataset split')
+  flags.DEFINE_enum('model', default = 'qwen2', enum_values = {'llama3', 'codellama', 'qwen2', 'codeqwen'}, help = 'model name')
+  flags.DEFINE_enum('prompt_style', default = 'select_3_full_table', enum_values = {'select_3_full_table',
                                                                'select_full_table',
                                                                'select_3',
                                                                'no_select',
