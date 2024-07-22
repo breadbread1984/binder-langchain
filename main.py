@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from absl import flags, app
+from tqdm import tqdm
 from nsql.database import NeuralDB
 from nsql.parser import extract_answers
 from utils import load_data_split, Evaluator
@@ -38,7 +39,7 @@ def main(unused_argv):
   }[FLAGS.model](FLAGS.locally)
   samples = load_data_split(FLAGS.dataset, split = FLAGS.split)
   score = 0
-  for sample in samples:
+  for sample in tqdm(samples):
     db = NeuralDB(tables = [{'title': sample['table']['page_title'], 'table': sample['table']}])
     template = get_binder_template(
       FLAGS.dataset,

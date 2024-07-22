@@ -60,7 +60,7 @@ def get_binder_template(dataset,
     if prompt_style == 'select_3_full_table_w_gold_passage_image': assert supporting_context is not None
     user_message += sql_example(prompt_style, df = table, num_rows = table.shape[0], few_shot_deomonstration = False)
     all_passages, all_images = list(), list()
-    with open(join('datasets','mmqa_captions.json'),'r') as f:
+    with open(join('dataset','mmqa_captions.json'),'r') as f:
       caption_map = json.load(f)
     if prompt_style == 'select_3_full_table_w_all_passage_image':
       for passage_idx in range(len(passages['id'])):
@@ -126,9 +126,9 @@ def get_binder_template(dataset,
 
 def few_shot_case(dataset = "tab_fact", n_shots = 8):
   file_path = {
-    'mmqa': join('datasets', 'mmqa_binder.txt'),
-    'tab_fact': join('datasets', 'tab_fact_binder.txt'),
-    'wikiq': join('datasets', 'wikiq_binder.txt')
+    'mmqa': join('dataset', 'mmqa_binder.txt'),
+    'tab_fact': join('dataset', 'tab_fact_binder.txt'),
+    'wikiq': join('dataset', 'wikiq_binder.txt')
   }[dataset]
   with open(file_path, 'r') as f:
     lines = f.readlines()
