@@ -28,7 +28,7 @@ def create_table_prompt(df, title):
     column_type = {'int64':'int',
                    'float64':'real',
                    'datetime64':'datetime',
-                   'text':'text'}[df[header].dtype]
+                   'object':'text'}[str(df[header].dtype)]
     if idx != len(df.columns) - 1:
       string += "\t%s %s,\n" % (header, column_type)
     else:
