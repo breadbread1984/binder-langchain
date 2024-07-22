@@ -33,16 +33,14 @@ def main(unused_argv):
   samples = load_data_split(FLAGS.dataset, split = FLAGS.split)
   for sample in samples:
     db = NeuralDB(tables = [{'title': sample['table']['page_title'], 'table': sample['table']}])
-    sample['table'] = db.get_table_df()
-    sample['title'] = db.get_table_title()
     template = get_binder_template(
       FLAGS.dataset,
       tokenizer,
       FLAGS.n_shots,
       prompt_style = FLAGS.prompt_style,
       generate_type = FLAGS.generate_type,
-      title = sample['title'],
-      table = sample['table'],
+      title = db.get_table_title(),
+      table = db.get_table_df(),
     )
     chain = template | llm
     response = chain.invoke({'question': sample['question']})
