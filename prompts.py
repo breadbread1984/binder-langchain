@@ -100,10 +100,10 @@ def get_binder_template(dataset,
             "pic": images['pic'][image_idx],
             "caption": caption_map[doc_id]
           })
-	user_message += passage_prompt(passages = all_passages, only_title = only_title)
-	user_message += image_prompt(images = all_images, only_title = only_title)
+    user_message += passage_prompt(passages = all_passages, only_title = only_title)
+    user_message += image_prompt(images = all_images, only_title = only_title)
   else:
-	raise NotImplementedError
+    raise NotImplementedError
   system_message = system_message.repalce('{','{{')
   system_message = system_message.replace('}','}}')
   user_message = user_message.replace('{','{{')
